@@ -1,90 +1,174 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intern Timesheet — บันทึกการฝึกงานรายเดือน</title>
-<meta name="description" content="บันทึกเวลาและรายละเอียดงานฝึกงานรายวัน ดูเป็นปฏิทินรายเดือน และส่งออกเป็น Excel สวยงาม">
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intern Timesheet — ระบบบันทึกรายงานการปฏิบัติงานรายสัปดาห์</title>
+  <meta name="description"
+    content="บันทึกการฝึกงานแบบรวบสัปดาห์ เลือกวันทำงานด้วยตัวเอง และส่งออกเป็นไฟล์ Excel ตามแบบฟอร์ม">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
+
 <body>
-<div class="bg-blob b1"></div><div class="bg-blob b2"></div>
-<header class="topbar">
-  <div class="brand"><span class="logo">⏱</span><div><h1>Intern Timesheet</h1><small>บันทึกการฝึกงานรายเดือน</small></div></div>
-  <div class="actions">
-    <button id="btn-profile" class="btn ghost">👤 ข้อมูลผู้ฝึกงาน</button>
-    <button id="btn-export" class="btn primary">⬇ Export Excel</button>
-  </div>
-</header>
-
-<main class="container">
-  <section class="stats" id="stats"></section>
-
-  <section class="card">
-    <div class="month-nav">
-      <button id="prev" class="icon-btn" aria-label="เดือนก่อน">‹</button>
-      <h2 id="month-label"></h2>
-      <button id="next" class="icon-btn" aria-label="เดือนถัดไป">›</button>
-      <button id="today" class="btn ghost sm">วันนี้</button>
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">📋</span>
+      <div>
+        <h1>Intern Weekly Log</h1>
+        <small>ระบบบันทึกรายงานการปฏิบัติงาน (รวบรายสัปดาห์)</small>
+      </div>
     </div>
-    <div class="weekdays"><span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span></div>
-    <div class="grid" id="grid"></div>
-    <div class="legend">
-      <span><i class="dot work"></i>ทำงาน</span><span><i class="dot wfh"></i>WFH</span>
-      <span><i class="dot leave"></i>ลา</span><span><i class="dot holiday"></i>วันหยุด</span>
+    <div class="actions">
+      <button id="btn-profile" class="btn ghost">👤 ข้อมูลผู้ฝึกงาน</button>
+      <button id="btn-export" class="btn primary">⬇ Export Excel เดือนนี้</button>
     </div>
-  </section>
+  </header>
 
-  <section class="card">
-    <h3>รายการในเดือนนี้</h3>
-    <div class="table-wrap"><table id="list"><thead><tr><th>วันที่</th><th>สถานะ</th><th>เข้า</th><th>ออก</th><th>ชม.</th><th>รายละเอียดงาน</th></tr></thead><tbody></tbody></table></div>
-  </section>
-</main>
+        <main class="container">
+          <section class="stats" id="stats"></section>
 
-<!-- Day modal -->
-<dialog id="day-modal">
-  <form method="dialog" id="day-form">
-    <h3 id="day-title"></h3>
-    <label>สถานะ
-      <select id="f-status">
-        <option value="work">ทำงาน (On-site)</option><option value="wfh">Work From Home</option>
-        <option value="leave">ลา</option><option value="holiday">วันหยุด</option>
-      </select>
-    </label>
-    <div class="row">
-      <label>เวลาเข้า<input type="time" id="f-in" value="09:00"></label>
-      <label>เวลาออก<input type="time" id="f-out" value="18:00"></label>
-      <label>พัก (นาที)<input type="number" id="f-break" value="60" min="0"></label>
+          <!-- Floating Selection Action Bar -->
+          <div class="select-bar" id="select-bar">
+            <div class="select-info">
+              <span class="badge-count" id="sel-count">0 วัน</span>
+              <div>
+                <strong id="sel-range-text">ยังไม่ได้เลือกวัน</strong>
+                <small>คลิกวงกลมบนปฏิทินเพื่อเลือกวันที่ต้องการรวบเป็นสัปดาห์เดียวกัน</small>
+              </div>
+            </div>
+              <div class="select-actions">
+                <button type="button" id="btn-sel-monfri" class="btn ghost sm">เลือก จ.-ศ. สัปดาห์นี้</button>
+                <button type="button" id="btn-sel-clear" class="btn ghost sm">ล้างที่เลือก</button>
+                <button type="button" id="btn-sel-create" class="btn primary">📝 บันทึกรวบสัปดาห์จากวันที่เลือก</button>
+              </div>
     </div>
-    <label>รายละเอียดงานที่ทำ<textarea id="f-task" rows="4" placeholder="เช่น พัฒนาหน้า Login, ประชุมทีม..."></textarea></label>
-    <label>สิ่งที่ได้เรียนรู้ / ปัญหา<textarea id="f-learn" rows="3" placeholder="(ไม่บังคับ)"></textarea></label>
-    <label>หมายเหตุ<input id="f-note" placeholder="เช่น Audit, ช่วยงานพี่..."></label>
-    <div class="modal-actions">
-      <button type="button" id="btn-delete" class="btn danger">ลบ</button>
-      <span style="flex:1"></span>
-      <button type="button" id="btn-cancel" class="btn ghost">ยกเลิก</button>
-      <button type="submit" id="btn-save" class="btn primary">บันทึก</button>
+
+          <section class="card">
+            <div class="month-nav">
+              <button id="prev" class="icon-btn" aria-label="เดือนก่อน">‹</button>
+              <div class="month-title-wrap">
+                <h2 id="month-label"></h2>
+                <small class="hint-text">💡 ติ๊กวงกลม ⭕ ในช่องวันที่ต้องการนำมารวมกัน แล้วกดปุ่มบันทึกด้านบน
+                  หรือคลิกปุ่ม "จัดการสัปดาห์" ท้ายแถว</small>
+              </div>
+          <button id="next" class="icon-btn" aria-label="เดือนถัดไป">›</button>
+          <button id="today" class="btn ghost sm">เดือนปัจจุบัน</button>
+        </div>
+        <div class="weekdays">
+          <span>จันทร์</span><span>อังคาร</span><span>พุธ</span><span>พฤหัสบดี</span><span>ศุกร์</span><span
+            class="wknd">เสาร์</span><span class="wknd">อาทิตย์</span><span class="wk-col-head">จัดการสัปดาห์</span>
+        </div>
+        <div class="calendar-weeks" id="grid"></div>
+        <div class="legend">
+          <span><i class="dot active-day"></i>วันที่รวมในสัปดาห์ (ทำงาน)</span>
+          <span><i class="dot selected-day"></i>กำลังติ๊กเลือก</span>
+          <span><i class="dot empty-day"></i>วันที่ไม่เลือก (ขีดฆ่า / วันหยุด)</span>
+        </div>
+      </section>
+
+          <section class="card">
+            <div class="section-head">
+              <div>
+                <h3>📑 รายการบันทึกประจำสัปดาห์ในเดือนนี้</h3>
+                <small class="mute">เฉพาะสัปดาห์ที่มีการบันทึกข้อมูลจะถูกนำไปสร้างเป็นไฟล์ Excel</small>
+              </div>
+    <button id="btn-add-week" class="btn ghost sm">+ เพิ่มบันทึกสัปดาห์ใหม่</button>
     </div>
-  </form>
-</dialog>
+    <div class="table-wrap">
+      <table id="list">
+        <thead>
+          <tr>
+            <th style="width:110px">สัปดาห์ที่</th>
+            <th style="width:220px">ช่วงวันที่รวมในรายงาน</th>
+            <th>บันทึกรายงานการปฏิบัติงาน (รวบทั้งสัปดาห์)</th>
+            <th style="width:160px">หมายเหตุ</th>
+            <th style="width:100px;text-align:center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    </section>
+    </main>
 
-<!-- Profile modal -->
-<dialog id="profile-modal">
-  <form method="dialog" id="profile-form">
-    <h3>ข้อมูลผู้ฝึกงาน</h3>
-    <label>ชื่อ-นามสกุล<input id="p-name"></label>
-    <div class="row"><label>เลขประจำตัวนิสิต<input id="p-id"></label><label>สาขา<input id="p-major"></label></div>
-    <div class="row"><label>มหาวิทยาลัย/คณะ<input id="p-uni" placeholder="คณะวิทยาศาสตร์ ศรีราชา ม.เกษตรศาสตร์"></label><label>ภาค/ปีการศึกษา<input id="p-term" placeholder="ต้น 2569"></label></div>
-    <div class="row"><label>สถานที่ฝึกงาน<input id="p-company"></label><label>แผนก/ตำแหน่ง<input id="p-dept"></label></div>
-    <div class="row"><label>วันเริ่มฝึกงาน<input type="date" id="p-start"></label><label>วันสิ้นสุด<input type="date" id="p-end"></label></div>
-    <div class="row"><label>ผู้ควบคุมการฝึกงาน<input id="p-mentor"></label><label>อาจารย์นิเทศ<input id="p-advisor"></label></div>
-    <div class="modal-actions"><span style="flex:1"></span><button type="submit" class="btn primary">บันทึก</button></div>
-  </form>
-</dialog>
+          <!-- Weekly Log Modal -->
+          <dialog id="week-modal">
+            <form method="dialog" id="week-form">
+              <div class="modal-head">
+                <h3 id="week-modal-title">บันทึกรายงานประจำสัปดาห์</h3>
+                <button type="button" id="btn-close-x" class="icon-btn sm">✕</button>
+              </div>
 
-<div id="toast"></div>
-<script src="app.js"></script>
-</body>
+              <div class="row">
+                <label style="max-width:160px">สัปดาห์ที่
+                  <input type="number" id="f-week-no" min="1" placeholder="เช่น 1" required>
+                </label>
+                  <div class="range-preview-box">
+                    <small>หัวกระดาษที่จะแสดงในรายงาน:</small>
+                    <strong id="f-header-preview">สัปดาห์ที่ 1 ระหว่างวันที่ ... ถึงวันที่ ...</strong>
+                  </div>
+          </div>
+
+                <div class="day-picker-section">
+                  <div class="picker-header">
+                    <span>⭕ คลิกเลือกวันที่ต้องการนำมารวมในสัปดาห์นี้
+                      <small>(วันไหนไม่เลือกจะถูกขีดเส้นทแยงมุม/ถือเป็นวันหยุด)</small></span>
+                    <div class="quick-pick">
+                      <button type="button" id="qp-monfri" class="chip-btn">จ.-ศ.</button>
+                      <button type="button" id="qp-all" class="chip-btn">ทั้งสัปดาห์</button>
+                      <button type="button" id="qp-clear" class="chip-btn">ล้าง</button>
+                    </div>
+                  </div>
+          <div class="week-day-pills" id="modal-day-pills"></div>
+          </div>
+
+          <label>บันทึกรายงานการปฏิบัติงาน (รวบยอดทั้งสัปดาห์เป็นก้อนเดียว)
+            <textarea id="f-task" rows="6"
+              placeholder="เช่น&#10;- ศึกษา Requirement ของระบบ OrderTracker&#10;- ศึกษา Requirement ของระบบ สต็อกพลอย, สต็อกอะไหล่&#10;- เรียนรู้โครงสร้าง Database (SQL Server 2012) ของบริษัท"
+              required></textarea>
+          </label>
+
+          <label>หมายเหตุ <small>(หากไม่ระบุ ระบบจะใส่เครื่องหมาย - ให้อัตโนมัติ)</small>
+            <input id="f-note" placeholder="เช่น - หรือ WFH / ลาป่วย 1 วัน">
+          </label>
+
+          <div class="modal-actions">
+            <button type="button" id="btn-delete" class="btn danger">🗑 ลบสัปดาห์นี้</button>
+            <span style="flex:1"></span>
+            <button type="button" id="btn-cancel" class="btn ghost">ยกเลิก</button>
+            <button type="submit" id="btn-save" class="btn primary">✓ บันทึกสัปดาห์นี้</button>
+          </div>
+      </form>
+    </dialog>
+
+    <!-- Profile modal -->
+    <dialog id="profile-modal">
+      <form method="dialog" id="profile-form">
+        <h3>👤 ข้อมูลผู้ฝึกงานและผู้ลงนาม</h3>
+        <label>ชื่อ-นามสกุล<input id="p-name" placeholder="นายนิติภูมิ ..."></label>
+        <div class="row"><label>เลขประจำตัวนิสิต<input id="p-id"></label><label>สาขา<input id="p-major"></label></div>
+        <div class="row"><label>มหาวิทยาลัย/คณะ<input id="p-uni"
+              placeholder="คณะวิทยาศาสตร์ ศรีราชา ม.เกษตรศาสตร์"></label><label>ภาค/ปีการศึกษา<input id="p-term"
+              placeholder="ต้น 2569"></label></div>
+        <div class="row"><label>สถานที่ฝึกงาน<input id="p-company"></label><label>แผนก/ตำแหน่ง<input
+              id="p-dept"></label></div>
+        <div class="row"><label>วันเริ่มฝึกงาน (ใช้นับสัปดาห์ที่ 1 อัตโนมัติ)<input type="date"
+              id="p-start"></label><label>วันสิ้นสุด<input type="date" id="p-end"></label></div>
+        <div class="row"><label>ชื่อผู้ควบคุมการฝึกงาน (พี่เลี้ยง)<input
+              id="p-mentor"></label><label>ชื่ออาจารย์นิเทศ<input id="p-advisor"></label></div>
+        <div class="modal-actions">
+          <span style="flex:1"></span>
+          <button type="button" id="btn-profile-cancel" class="btn ghost">ปิด</button>
+          <button type="submit" class="btn primary">บันทึกข้อมูล</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast"></div>
+    <script src="app.js"></script>
+  </body>
 </html>
