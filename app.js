@@ -491,59 +491,49 @@ $('profile-form').onsubmit = () => {
   toast('บันทึกข้อมูลผู้ฝึกงานแล้ว ✓');
 };
 
-// ==========================================
-// EXCEL EXPORT (Form Style 2 + Weekly Combined)
-// ==========================================
-function addCombinedWeekSheet(wb, monKey, rec) {
-  const F = 'TH Sarabun New';
-  const thin = { style: 'thin', color: { argb: 'FF000000' } };
-  const border = { top: thin, left: thin, bottom: thin, right: thin };
-  const slashBorder = {
-    top: thin, left: thin, bottom: thin, right: thin,
-    diagonal: { up: true, down: false, style: 'medium', color: { argb: 'FFEF4444' } }
-  };
+const F = 'TH Sarabun New';
+const thin = { style: 'thin', color: { argb: 'FF000000' } };
+const border = { top: thin, left: thin, bottom: thin, right: thin };
+const slashBorder = {
+  top: thin, left: thin, bottom: thin, right: thin,
+  diagonal: { up: true, down: false, style: 'medium', color: { argb: 'FFEF4444' } }
+};
 
-  const info = getWeekRangeInfo(monKey, rec.days);
-  const sheetTitle = `สัปดาห์ที่ ${rec.weekNo}`.slice(0, 31);
-  const ws = wb.addWorksheet(sheetTitle, {
-    pageSetup: {
-      paperSize: 9,
-      orientation: 'portrait',
-      fitToPage: true,
-      fitToWidth: 1,
-      fitToHeight: 1,
-      horizontalCentered: true
-    }
-  });
-
-  ws.columns = [{ width: 24 }, { width: 56 }, { width: 20 }];
+// ==========================================
+// EXCEL EXPORT (Single Continuous Sheet - All Weeks)
+// ==========================================
+function appendWeekTableToSheet(ws, startRow, monKey, rec) {
+  const mon = parseKey(monKey);
+  const sun = addDays(mon, 6);
 
   // Title Row 1
-  ws.mergeCells('A1:C1');
-  ws.getCell('A1').value = 'รายงานการบันทึกการปฏิบัติงาน';
-  ws.getCell('A1').font = { name: F, size: 20, bold: true };
-  ws.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.getRow(1).height = 34;
+  let r = startRow;
+  ws.mergeCells(`A${r}:C${r}`);
+  ws.getCell(`A${r}`).value = 'รายงานการบันทึกการปฏิบัติงาน';
+  ws.getCell(`A${r}`).font = { name: F, size: 20, bold: true };
+  ws.getCell(`A${r}`).alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(r).height = 34;
 
   // Subtitle Row 2: Week No & Date Range
-  ws.mergeCells('A2:C2');
-  ws.getCell('A2').value = `สัปดาห์ที่..........${rec.weekNo}..........ระหว่างวันที่......${thFullDate(info.firstDate)}......ถึงวันที่......${thFullDate(info.lastDate)}......`;
-  ws.getCell('A2').font = { name: F, size: 16 };
-  ws.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.getRow(2).height = 28;
+  r++;
+  ws.mergeCells(`A${r}:C${r}`);
+  ws.getCell(`A${r}`).value = `สัปดาห์ที่..........${rec.weekNo}..........ระหว่างวันที่......${thFullDate(mon)}......ถึงวันที่......${thFullDate(sun)}......`;
+  ws.getCell(`A${r}`).font = { name: F, size: 16 };
+  ws.getCell(`A${r}`).alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(r).height = 28;
 
-  // Table Header Row 4
-  ws.getRow(4).values = ['วัน / ช่วงวันที่ปฏิบัติงาน', 'บันทึกรายงานการปฏิบัติงาน', 'หมายเหตุ'];
-  ws.getRow(4).height = 28;
-  ws.getRow(4).eachCell(c => {
+  // Table Header Row 4 (เว้น 1 แถว)
+  r += 2;
+  ws.getRow(r).values = ['วัน / วันที่ปฏิบัติงาน', 'บันทึกรายงานการปฏิบัติงาน', 'หมายเหตุ'];
+  ws.getRow(r).height = 28;
+  ws.getRow(r).eachCell(c => {
     c.font = { name: F, size: 16, bold: true };
     c.alignment = { horizontal: 'center', vertical: 'middle' };
     c.border = border;
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
   });
 
-  // Partition the 7 days of the week into contiguous blocks of "selected (working)" vs "unselected (slashed)"
-  const mon = parseKey(monKey);
+  // แบ่ง 7 วันออกเป็นบล็อก วันทำงาน (Selected) กับ วันที่ไม่ทำงาน (Slashed)
   const activeSet = new Set(rec.days || []);
   const blocks = [];
   for (let i = 0; i < 7; i++) {
@@ -557,25 +547,24 @@ function addCombinedWeekSheet(wb, monKey, rec) {
     }
   }
 
-  let currentRow = 5;
   let workBlockRendered = false;
-
   blocks.forEach(b => {
+    r++;
     const firstD = b.days[0];
     const lastD = b.days[b.days.length - 1];
     const dayLabel = b.days.length === 1
       ? `${thDayName(firstD)}\n(${firstD.getDate()} ${TH_MONTHS[firstD.getMonth()].slice(0, 4)})`
       : `${thDayName(firstD)} - ${thDayName(lastD)}\n(${firstD.getDate()} - ${lastD.getDate()} ${TH_MONTHS[lastD.getMonth()].slice(0, 4)})`;
 
-    const row = ws.getRow(currentRow++);
+    const row = ws.getRow(r);
     if (b.isWork) {
       const taskText = !workBlockRendered ? (rec.task || '-') : '(รวมในรายการปฏิบัติงานประจำสัปดาห์ด้านบน)';
       const noteText = !workBlockRendered ? (rec.note || '-') : '-';
       workBlockRendered = true;
 
       row.values = [dayLabel, taskText, noteText];
-      const lineCount = Math.max(6, (taskText.split('\n').length + Math.ceil(taskText.length / 45)));
-      row.height = Math.max(180, lineCount * 24);
+      const lineCount = Math.max(5, (taskText.split('\n').length + Math.ceil(taskText.length / 45)));
+      row.height = Math.max(130, lineCount * 22);
 
       row.eachCell({ includeEmpty: true }, (c, col) => {
         c.font = { name: F, size: 16, bold: col === 1 };
@@ -587,9 +576,9 @@ function addCombinedWeekSheet(wb, monKey, rec) {
         };
       });
     } else {
-      // Unselected days -> Slashed diagonal line across the cells
+      // วันที่ไม่ได้ปฏิบัติงาน -> ขีดฆ่าทะแยงมุม (Slashed)
       row.values = [dayLabel, '', ''];
-      row.height = 58;
+      row.height = 46;
       row.getCell(1).font = { name: F, size: 15, color: { argb: 'FF6B7280' } };
       row.getCell(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       row.getCell(1).border = border;
@@ -599,110 +588,80 @@ function addCombinedWeekSheet(wb, monKey, rec) {
     }
   });
 
-  // Signatures at bottom
-  const sigStart = currentRow + 2;
+  // ลายเซ็นต์
+  r += 2;
   [
-    [sigStart, 'ลงชื่อ ........................................ ผู้ควบคุมการฝึกงาน', profile.mentor],
-    [sigStart + 3, 'ลงชื่อ ........................................ อาจารย์นิเทศ', profile.advisor]
-  ].forEach(([r, lineText, personName]) => {
-    ws.mergeCells(`A${r}:C${r}`);
-    ws.getCell(`A${r}`).value = lineText;
-    ws.getCell(`A${r}`).font = { name: F, size: 16 };
-    ws.getCell(`A${r}`).alignment = { horizontal: 'center' };
+    [r, 'ลงชื่อ ........................................ ผู้ควบคุมการฝึกงาน', profile.mentor],
+    [r + 3, 'ลงชื่อ ........................................ อาจารย์นิเทศ', profile.advisor]
+  ].forEach(([sigR, lineText, personName]) => {
+    ws.mergeCells(`A${sigR}:C${sigR}`);
+    ws.getCell(`A${sigR}`).value = lineText;
+    ws.getCell(`A${sigR}`).font = { name: F, size: 16 };
+    ws.getCell(`A${sigR}`).alignment = { horizontal: 'center' };
 
     if (personName) {
-      ws.mergeCells(`A${r + 1}:C${r + 1}`);
-      ws.getCell(`A${r + 1}`).value = `( ${personName} )`;
-      ws.getCell(`A${r + 1}`).font = { name: F, size: 15 };
-      ws.getCell(`A${r + 1}`).alignment = { horizontal: 'center' };
+      ws.mergeCells(`A${sigR + 1}:C${sigR + 1}`);
+      ws.getCell(`A${sigR + 1}`).value = `( ${personName} )`;
+      ws.getCell(`A${sigR + 1}`).font = { name: F, size: 15 };
+      ws.getCell(`A${sigR + 1}`).alignment = { horizontal: 'center' };
     }
   });
+
+  // ทิ้งท้ายเว้นแถวว่างระหว่างสัปดาห์ (เว้นระยะ 5 แถว)
+  return r + 5;
 }
 
 $('btn-export').onclick = async () => {
-  const y = cur.getFullYear(), m = cur.getMonth();
-  const mondays = getMonthMondays(y, m);
-  const monthRecs = mondays
-    .map(mon => ({ monKey: fmtKey(mon), rec: weeklyLogs[fmtKey(mon)] }))
+  // ดึงข้อมูลสัปดาห์ที่บันทึกไว้ทั้งหมด เรียงตามวันที่ (ครอบคลุมทุกเดือน)
+  const allMonKeys = Object.keys(weeklyLogs).sort();
+  const validWeeks = allMonKeys
+    .map(monKey => ({ monKey, rec: weeklyLogs[monKey] }))
     .filter(x => x.rec && x.rec.days && x.rec.days.length > 0);
 
-  if (monthRecs.length === 0) {
-    toast('ยังไม่มีสัปดาห์ที่บันทึกในเดือนนี้ให้ Export ครับ');
+  if (validWeeks.length === 0) {
+    toast('ยังไม่มีสัปดาห์ที่บันทึกไว้ในระบบให้ Export ครับ');
     return;
   }
 
   const wb = new ExcelJS.Workbook();
-  const F = 'TH Sarabun New';
-  const thin = { style: 'thin', color: { argb: 'FF000000' } };
-  const border = { top: thin, left: thin, bottom: thin, right: thin };
 
-  // 1) Summary Sheet of all recorded weeks in the selected month
-  const sumWs = wb.addWorksheet(`รวมเดือน${TH_MONTHS[m]}`, {
-    pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true }
-  });
-  sumWs.columns = [{ width: 14 }, { width: 26 }, { width: 52 }, { width: 18 }];
-
-  sumWs.mergeCells('A1:D1');
-  sumWs.getCell('A1').value = `สรุปรายงานการบันทึกการปฏิบัติงาน ประจำเดือน${TH_MONTHS[m]} พ.ศ. ${y + 543}`;
-  sumWs.getCell('A1').font = { name: F, size: 20, bold: true };
-  sumWs.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
-  sumWs.getRow(1).height = 34;
-
-  if (profile.name || profile.company) {
-    sumWs.mergeCells('A2:D2');
-    sumWs.getCell('A2').value = `ผู้ฝึกงาน: ${profile.name || '-'}   รหัสนิสิต: ${profile.id || '-'}   สถานที่ฝึกงาน: ${profile.company || '-'}`;
-    sumWs.getCell('A2').font = { name: F, size: 15 };
-    sumWs.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
-  }
-
-  const hr = 4;
-  sumWs.getRow(hr).values = ['สัปดาห์ที่', 'ช่วงวันที่ปฏิบัติงาน', 'บันทึกรายงานการปฏิบัติงาน (รวบทั้งสัปดาห์)', 'หมายเหตุ'];
-  sumWs.getRow(hr).height = 28;
-  sumWs.getRow(hr).eachCell(c => {
-    c.font = { name: F, size: 16, bold: true };
-    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
-    c.alignment = { horizontal: 'center', vertical: 'middle' };
-    c.border = border;
+  // จัดกลุ่มตามเดือนของ "วันทำงานวันแรก" ในสัปดาห์นั้น -> 1 เดือน = 1 Sheet
+  const byMonth = new Map();
+  validWeeks.forEach(w => {
+    const first = parseKey([...w.rec.days].sort()[0]);
+    const key = `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, '0')}`;
+    if (!byMonth.has(key)) byMonth.set(key, { date: first, weeks: [] });
+    byMonth.get(key).weeks.push(w);
   });
 
-  let r = hr + 1;
-  monthRecs.forEach(({ monKey, rec }) => {
-    const info = getWeekRangeInfo(monKey, rec.days);
-    const row = sumWs.getRow(r++);
-    const rangeLabel = `${info.dayNamesLabel}\n(${thFullDate(info.firstDate)} - ${thFullDate(info.lastDate)})`;
-    row.values = [`สัปดาห์ที่ ${rec.weekNo}`, rangeLabel, rec.task || '-', rec.note || '-'];
-
-    const lines = Math.max(3, (rec.task || '').split('\n').length + Math.ceil((rec.task || '').length / 45));
-    row.height = Math.max(64, lines * 22);
-    row.eachCell({ includeEmpty: true }, (c, col) => {
-      c.font = { name: F, size: 15, bold: col === 1 };
-      c.border = border;
-      c.alignment = {
-        vertical: col === 1 ? 'middle' : 'top',
-        horizontal: col === 3 ? 'left' : 'center',
-        wrapText: true
-      };
+  [...byMonth.keys()].sort().forEach(key => {
+    const { date, weeks } = byMonth.get(key);
+    const ws = wb.addWorksheet(`${TH_MONTHS[date.getMonth()]} ${date.getFullYear() + 543}`.slice(0, 31), {
+      pageSetup: {
+        paperSize: 9,
+        orientation: 'portrait',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+        horizontalCentered: true
+      }
     });
-  });
+    ws.columns = [{ width: 24 }, { width: 56 }, { width: 20 }];
 
-  // Signatures on monthly summary
-  r += 2;
-  sumWs.mergeCells(`A${r}:D${r}`);
-  sumWs.getCell(`A${r}`).value = 'ลงชื่อ ........................................ ผู้ควบคุมการฝึกงาน          ลงชื่อ ........................................ อาจารย์นิเทศ';
-  sumWs.getCell(`A${r}`).font = { name: F, size: 16 };
-  sumWs.getCell(`A${r}`).alignment = { horizontal: 'center' };
-
-  // 2) Individual Weekly Sheets (for each recorded week in the selected month)
-  monthRecs.forEach(({ monKey, rec }) => {
-    addCombinedWeekSheet(wb, monKey, rec);
+    let nextRow = 1;
+    weeks.forEach(({ monKey, rec }, i) => {
+      nextRow = appendWeekTableToSheet(ws, nextRow, monKey, rec);
+      // ขึ้นหน้าใหม่ทุกสัปดาห์ เพื่อให้ตรงกับหน้า PDF/พิมพ์
+      if (i < weeks.length - 1) ws.getRow(nextRow - 1).addPageBreak();
+    });
   });
 
   const buf = await wb.xlsx.writeBuffer();
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-  a.download = `รายงานการปฏิบัติงาน_รายสัปดาห์_${TH_MONTHS[m]}_${y + 543}.xlsx`;
+  a.download = `รายงานการปฏิบัติงาน_แยกตามเดือน_${new Date().getFullYear() + 543}.xlsx`;
   a.click();
-  toast(`Export Excel สำเร็จ (${monthRecs.length} สัปดาห์) ✓`);
+  toast(`Export Excel ครบทุกสัปดาห์สำเร็จ (${validWeeks.length} สัปดาห์ แยก ${byMonth.size} Sheet ตามเดือน) ✓`);
 };
 
 render();
