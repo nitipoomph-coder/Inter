@@ -855,3 +855,193 @@ textarea:focus {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* Print / Save as PDF */
+#print-area {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    font-family: 'TH Sarabun New', 'Prompt', sans-serif;
+    font-size: 16pt;
+  }
+
+  body>*:not(#print-area) {
+    display: none !important;
+  }
+
+  #print-area {
+    display: block;
+  }
+
+  .print-page {
+    page-break-after: always;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto;
+  }
+
+  .print-page h1 {
+    text-align: center;
+    font-size: 22pt;
+    margin-bottom: 4px;
+  }
+
+  .print-sub {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  #print-area table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  #print-area th,
+  #print-area td {
+    border: 1px solid #000;
+    padding: 6px 8px;
+    color: #000;
+    font-size: 15pt;
+    vertical-align: top;
+  }
+
+  #print-area th {
+    background: #f3f4f6;
+    text-align: center;
+  }
+
+  #print-area thead {
+    display: table-header-group;
+  }
+
+  #print-area tr {
+    page-break-inside: avoid;
+  }
+
+  #print-area td.c {
+    text-align: center;
+  }
+
+  #print-area td.task {
+    white-space: pre-wrap;
+    text-align: left;
+  }
+
+  .print-sign {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+}
+
+
+/* ===== Modern flat theme (override) ===== */
+:root {
+  --bg: #0a0a0c;
+  --card: #111114;
+  --line: #24242b;
+  --text: #ececf1;
+  --mute: #8b8b98;
+  --pri: #6366f1;
+  --pri2: #818cf8;
+  --work: #22c55e;
+  --sel: #f59e0b;
+  --danger: #ef4444;
+}
+
+body {
+  font-family: 'IBM Plex Sans Thai', 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+}
+
+.bg-blob { display: none; }
+
+.topbar {
+  background: rgba(10, 10, 12, 0.85);
+  padding: 14px 32px;
+}
+
+.logo {
+  background: var(--pri);
+  box-shadow: none;
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+}
+
+.brand h1 { font-size: 1.1rem; font-weight: 600; }
+
+.btn { border-radius: 10px; font-weight: 500; }
+
+.btn.primary {
+  background: var(--pri);
+  box-shadow: none;
+}
+
+.btn.primary:hover {
+  background: #7578f5;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn.ghost { background: transparent; }
+.btn.ghost:hover { background: rgba(255, 255, 255, 0.06); }
+
+.card, .stat, dialog {
+  background: var(--card);
+  backdrop-filter: none;
+  border-radius: 16px;
+}
+
+.stat b {
+  background: none;
+  color: var(--text);
+  -webkit-background-clip: initial;
+  font-weight: 600;
+}
+
+.select-bar,
+.select-bar.has-selection {
+  background: var(--card);
+  box-shadow: none;
+  border-radius: 14px;
+}
+.select-bar { border-color: var(--line); }
+
+.week-row { background: transparent; }
+.week-row.has-record { background: rgba(34, 197, 94, 0.04); border-color: rgba(34, 197, 94, 0.2); }
+
+.day { background: #15151a; border-radius: 10px; }
+.day:hover { transform: none; background: #1b1b22; }
+.day.in-week-active { background: rgba(34, 197, 94, 0.1); }
+
+.week-action-cell { background: #15151a; border-radius: 10px; }
+
+#toast { background: #1f1f27; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+
+input, select, textarea { background: #15151a; border-radius: 9px; }
+
+dialog::backdrop { background: rgba(0, 0, 0, 0.7); }
+
+.pill-week { background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.4); color: #c7c9ff; }
+.badge-count { background: var(--pri); }
+
+@media print {
+  #print-area s.off { color: #888; text-decoration: line-through; }
+}

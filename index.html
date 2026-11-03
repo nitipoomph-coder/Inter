@@ -6,7 +6,7 @@
   <title>Intern Timesheet — ระบบบันทึกรายงานการปฏิบัติงานรายสัปดาห์</title>
   <meta name="description"
     content="บันทึกการฝึกงานแบบรวบสัปดาห์ เลือกวันทำงานด้วยตัวเอง และส่งออกเป็นไฟล์ Excel ตามแบบฟอร์ม">
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
@@ -24,7 +24,8 @@
     </div>
     <div class="actions">
       <button id="btn-profile" class="btn ghost">👤 ข้อมูลผู้ฝึกงาน</button>
-      <button id="btn-export" class="btn primary">⬇ Export Excel ทั้งหมด (Sheet เดียว)</button>
+      <button id="btn-print" class="btn ghost">🖨 พิมพ์ / PDF</button>
+      <button id="btn-export" class="btn primary">⬇ Export Excel</button>
     </div>
   </header>
 
@@ -168,6 +169,7 @@
       </form>
     </dialog>
 
+    <section id="print-area"></section>
     <div id="toast"></div>
     <script src="app.js"></script>
   </body>
